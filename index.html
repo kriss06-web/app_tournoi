@@ -2,87 +2,144 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tournament Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tournoi Tracker Pro</title>
     <style>
-        :root { --primary: #2563eb; --secondary: #64748b; --success: #22c55e; --danger: #ef4444; --bg: #f8fafc; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #1e293b; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        h1, h2 { margin-top: 0; color: var(--primary); font-size: 1.4rem; }
-        label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.85rem; color: var(--secondary); }
-        input, select, textarea { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
-        .flex-row { display: flex; gap: 8px; align-items: center; }
-        .btn-plus { background: var(--success); width: 50px; height: 46px; flex-shrink: 0; color: white; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; cursor: pointer; }
-        button { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1rem; }
-        .btn-sec { background: var(--secondary); }
-        .btn-dan { background: var(--danger); font-size: 0.8rem; padding: 6px 10px; width: auto; }
-        .match-item { border-left: 6px solid #ddd; padding: 10px; margin: 10px 0; background: #fff; border-radius: 6px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .WIN { border-color: var(--success); }
-        .LOSE { border-color: var(--danger); }
+        :root { 
+            --primary: #3b82f6; --primary-dark: #2563eb;
+            --bg: #f1f5f9; --card: #ffffff;
+            --text-main: #0f172a; --text-sub: #64748b;
+            --win: #10b981; --lose: #ef4444;
+        }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: var(--bg); color: var(--text-main);
+            margin: 0; padding: env(safe-area-inset-top) 15px 40px 15px; 
+        }
+
+        /* En-tête */
+        header { padding: 20px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; }
+        h1 { margin: 0; font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+
+        /* Cartes et Éléments */
+        .card { 
+            background: var(--card); padding: 18px; border-radius: 16px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+            margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.05);
+        }
         .hidden { display: none; }
-        .stats-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .deck-tag { display: inline-block; background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-top: 4px; }
+
+        /* Formulaires */
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.85rem; color: var(--text-sub); }
+        input, select, textarea { 
+            width: 100%; padding: 12px 16px; margin-bottom: 15px;
+            border: 1px solid #e2e8f0; border-radius: 10px; font-size: 1rem;
+            background: #f8fafc; transition: border-color 0.2s;
+        }
+        input:focus { border-color: var(--primary); outline: none; background: #fff; }
+
+        /* Boutons */
+        button { 
+            background: var(--primary); color: white; border: none; padding: 14px;
+            border-radius: 12px; font-weight: 700; cursor: pointer;
+            font-size: 1rem; transition: transform 0.1s, background 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        button:active { transform: scale(0.98); background: var(--primary-dark); }
+        .btn-sec { background: #64748b; }
+        .btn-dan { background: #fee2e2; color: var(--lose); padding: 8px 12px; font-size: 0.8rem; width: auto; }
+        .btn-plus { width: 50px; height: 48px; background: var(--win); margin-bottom: 15px; font-size: 1.5rem; }
+
+        /* Historique & Matchs */
+        .event-item { display: flex; justify-content: space-between; align-items: center; }
+        .event-info h3 { margin: 0; font-size: 1.1rem; }
+        .event-info p { margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-sub); }
+
+        .match-item { 
+            border-left: 6px solid #cbd5e1; padding: 12px; margin: 12px 0;
+            background: #fff; border-radius: 8px; position: relative;
+        }
+        .match-item.WIN { border-color: var(--win); background: #f0fdf4; }
+        .match-item.LOSE { border-color: var(--lose); background: #fef2f2; }
+        .match-header { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 4px; }
+        .match-comment { font-size: 0.85rem; color: var(--text-sub); font-style: italic; margin-top: 5px; }
+
+        /* Stats */
+        .stat-bar-bg { background: #e2e8f0; height: 8px; border-radius: 4px; margin-top: 8px; overflow: hidden; }
+        .stat-bar-fill { background: var(--primary); height: 100%; border-radius: 4px; }
+
+        .flex-row { display: flex; gap: 10px; align-items: flex-start; }
     </style>
 </head>
 <body>
 
-    <!-- SECTION ACCUEIL -->
-    <div id="sec-home">
-        <h1>🏆 Mes Tournois</h1>
-        <button onclick="nav('sec-new-event')">➕ Nouveau Tournoi</button>
-        <button class="btn-sec" onclick="nav('sec-decks')" style="margin-top:10px">🎴 Gérer mes Decks</button>
-        <button class="btn-sec" onclick="nav('sec-stats')" style="margin-top:10px">📊 Mes Stats</button>
+    <header id="main-header">
+        <h1>🏆 Tournoi Tracker</h1>
+    </header>
 
-        <h2 style="margin-top:30px">Historique</h2>
+    <!-- ACCUEIL -->
+    <div id="sec-home">
+        <button onclick="nav('sec-new-event')">➕ Nouveau Tournoi</button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+            <button class="btn-sec" onclick="nav('sec-decks')">🎴 Decks</button>
+            <button class="btn-sec" onclick="nav('sec-stats')">📊 Stats</button>
+        </div>
+
+        <h2 style="margin: 25px 0 15px 0; font-size: 1.2rem;">Historique</h2>
         <div id="list-events"></div>
         
-        <div style="margin-top:40px; display:flex; gap:10px;">
-            <button class="btn-sec" style="font-size:10px" onclick="exportData()">💾 Export JSON</button>
-            <button class="btn-sec" style="font-size:10px" onclick="document.getElementById('fileIn').click()">📂 Import JSON</button>
+        <div style="margin-top:40px; display:flex; gap:10px; opacity: 0.6;">
+            <button class="btn-sec" style="font-size:10px; padding: 8px;" onclick="exportData()">💾 Export</button>
+            <button class="btn-sec" style="font-size:10px; padding: 8px;" onclick="document.getElementById('fileIn').click()">📂 Import</button>
             <input type="file" id="fileIn" class="hidden" onchange="importData(event)">
         </div>
     </div>
 
-    <!-- SECTION NOUVEAU TOURNOI -->
+    <!-- NOUVEAU TOURNOI -->
     <div id="sec-new-event" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
-        <div class="card">
+        <div class="card" style="margin-top: 15px;">
             <h2>Démarrer un Tournoi</h2>
             <label>Nom du tournoi</label>
-            <input type="text" id="ev-name" placeholder="ex: Regional Paris">
+            <input type="text" id="ev-name" placeholder="ex: Cup de Juillet">
             
-            <label>Date & Lieu (Optionnel)</label>
             <div class="flex-row">
-                <input type="date" id="ev-date">
-                <input type="text" id="ev-place" placeholder="Lieu">
+                <div style="flex:1">
+                    <label>Date</label>
+                    <input type="date" id="ev-date">
+                </div>
+                <div style="flex:1">
+                    <label>Lieu</label>
+                    <input type="text" id="ev-place" placeholder="Ville">
+                </div>
             </div>
             
-            <label>Mon Deck joué :</label>
+            <label>Mon Deck joué</label>
             <div class="flex-row">
                 <select id="sel-my-deck"></select>
                 <button class="btn-plus" onclick="quickAdd('myDecks', 'sel-my-deck')">+</button>
             </div>
             
-            <button onclick="handleCreateTournament()" style="margin-top:20px; background: var(--success);">🚀 CRÉER LE TOURNOI</button>
+            <button onclick="handleCreateTournament()" style="margin-top:10px">🚀 Créer le Tournoi</button>
         </div>
     </div>
 
-    <!-- SECTION MATCHS (DANS UN TOURNOI) -->
+    <!-- MATCHS -->
     <div id="sec-matches" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour Accueil</button>
-        <div class="card">
-            <h2 id="view-title">Matches</h2>
-            <p id="view-info" style="color:var(--secondary); font-size:0.9rem; margin-top:-10px;"></p>
-            
-            <div id="matches-list"></div>
-            
-            <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+        <div class="card" style="margin-top: 15px; border-bottom: 4px solid var(--primary);">
+            <h2 id="view-title" style="margin-bottom: 5px;">---</h2>
+            <p id="view-info"></p>
+        </div>
+
+        <div id="matches-list"></div>
+        
+        <div class="card" style="margin-top: 30px; background: #f8fafc;">
             <h3>Ajouter un match</h3>
-            
             <label>Adversaire</label>
-            <input type="text" id="m-opp-name" placeholder="Nom">
+            <input type="text" id="m-opp-name" placeholder="Pseudo">
             
-            <label>Son Deck :</label>
+            <label>Son Deck</label>
             <div class="flex-row">
                 <select id="sel-opp-deck"></select>
                 <button class="btn-plus" onclick="quickAdd('oppDecks', 'sel-opp-deck')">+</button>
@@ -90,69 +147,74 @@
             
             <label>Résultat</label>
             <select id="m-res">
-                <option value="WIN">VICTOIRE (WIN)</option>
-                <option value="LOSE">DÉFAITE (LOSE)</option>
+                <option value="WIN">✅ VICTOIRE (WIN)</option>
+                <option value="LOSE">❌ DÉFAITE (LOSE)</option>
             </select>
             
-            <label>Commentaire (Optionnel)</label>
-            <textarea id="m-comm" placeholder="Remarques sur le match..."></textarea>
+            <label>Commentaire</label>
+            <textarea id="m-comm" rows="2" placeholder="Ex: Missplay T3..."></textarea>
             
             <button onclick="handleAddMatch()">Enregistrer le Match</button>
         </div>
     </div>
 
-    <!-- SECTION GESTION DECKS -->
+    <!-- GESTION DECKS -->
     <div id="sec-decks" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
-        <div class="card">
-            <h3>Mes Decks Perso</h3>
+        <div class="card" style="margin-top: 15px;">
+            <h3>Mes Decks</h3>
             <div class="flex-row">
-                <input type="text" id="in-my-deck" placeholder="Nouveau deck perso">
+                <input type="text" id="in-my-deck" placeholder="Nom du deck">
                 <button class="btn-plus" onclick="manualAdd('myDecks', 'in-my-deck')">+</button>
             </div>
-            <div id="render-my-decks" style="margin-top:10px"></div>
+            <div id="render-my-decks"></div>
         </div>
         <div class="card">
             <h3>Decks Adversaires</h3>
             <div class="flex-row">
-                <input type="text" id="in-opp-deck" placeholder="Nouveau deck adverse">
+                <input type="text" id="in-opp-deck" placeholder="Nom du deck">
                 <button class="btn-plus" onclick="manualAdd('oppDecks', 'in-opp-deck')">+</button>
             </div>
-            <div id="render-opp-decks" style="margin-top:10px"></div>
+            <div id="render-opp-decks"></div>
         </div>
     </div>
 
-    <!-- SECTION STATS -->
+    <!-- STATS -->
     <div id="sec-stats" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
-        <div class="card">
-            <h2>Mes Performances par Deck</h2>
-            <div id="render-stats"></div>
-        </div>
+        <div id="render-stats" style="margin-top: 15px;"></div>
     </div>
 
 <script>
-    // --- INITIALISATION ---
     let db = {
         events: [],
-        myDecks: ["Mon Deck A"],
-        oppDecks: ["Deck Inconnu"],
+        myDecks: ["Deck Standard"],
+        oppDecks: ["Inconnu"],
         activeId: null
     };
 
+    // Formatage de date DD/MM/YY
+    function fmtDate(isoStr) {
+        if(!isoStr) return "--/--/--";
+        const d = new Date(isoStr);
+        return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', year:'2-digit'});
+    }
+
     function loadDB() {
-        const saved = localStorage.getItem('tournoi_final_db');
+        const saved = localStorage.getItem('tournoi_pro_db');
         if(saved) db = JSON.parse(saved);
+        
+        // Pré-remplir la date du jour
+        document.getElementById('ev-date').value = new Date().toISOString().split('T')[0];
+        
         renderHome();
         updateAllSelects();
     }
 
-    function saveDB() {
-        localStorage.setItem('tournoi_final_db', JSON.stringify(db));
-    }
+    function saveDB() { localStorage.setItem('tournoi_pro_db', JSON.stringify(db)); }
 
     function nav(id) {
-        document.querySelectorAll('body > div').forEach(d => d.classList.add('hidden'));
+        document.querySelectorAll('body > div[id^="sec-"]').forEach(d => d.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
         if(id === 'sec-home') renderHome();
         if(id === 'sec-decks') renderDecksView();
@@ -160,7 +222,6 @@
         window.scrollTo(0,0);
     }
 
-    // --- GESTION DECKS ---
     function updateAllSelects() {
         const sMy = document.getElementById('sel-my-deck');
         const sOpp = document.getElementById('sel-opp-deck');
@@ -172,8 +233,7 @@
         const n = prompt("Nom du nouveau deck :");
         if(n) {
             db[type].push(n);
-            saveDB();
-            updateAllSelects();
+            saveDB(); updateAllSelects();
             document.getElementById(selectId).value = n;
         }
     }
@@ -188,7 +248,7 @@
     }
 
     function deleteDeck(type, name) {
-        if(confirm("Supprimer ce deck ?")) {
+        if(confirm(`Supprimer "${name}" ?`)) {
             db[type] = db[type].filter(d => d !== name);
             saveDB(); updateAllSelects(); renderDecksView();
         }
@@ -198,8 +258,8 @@
         const ui = (type, divId) => {
             document.getElementById(divId).innerHTML = db[type].sort().map(d => `
                 <div class="stats-row">
-                    <span>${d}</span>
-                    <button class="btn-dan" onclick="deleteDeck('${type}', '${d}')">X</button>
+                    <span style="font-weight:500">${d}</span>
+                    <button class="btn-dan" onclick="deleteDeck('${type}', '${d}')">Suppr</button>
                 </div>
             `).join('');
         };
@@ -207,20 +267,17 @@
         ui('oppDecks', 'render-opp-decks');
     }
 
-    // --- GESTION TOURNOIS ---
     function handleCreateTournament() {
-        const name = document.getElementById('ev-name').value || "Tournoi";
         const newEv = {
             id: Date.now(),
-            name: name,
-            date: document.getElementById('ev-date').value || "",
+            name: document.getElementById('ev-name').value || "Tournoi",
+            date: document.getElementById('ev-date').value,
             place: document.getElementById('ev-place').value || "",
-            myDeck: document.getElementById('sel-my-deck').value || "Inconnu",
+            myDeck: document.getElementById('sel-my-deck').value,
             matches: []
         };
         db.events.unshift(newEv);
         saveDB();
-        renderHome();
         openTournament(newEv.id);
     }
 
@@ -229,18 +286,21 @@
         const ev = db.events.find(e => e.id === id);
         if(!ev) return nav('sec-home');
         document.getElementById('view-title').innerText = ev.name;
-        document.getElementById('view-info').innerText = `${ev.date} ${ev.place} | Deck: ${ev.myDeck}`;
+        document.getElementById('view-info').innerHTML = `📅 ${fmtDate(ev.date)} • 📍 ${ev.place || 'NC'}<br><b>🎴 Mon Deck : ${ev.myDeck}</b>`;
         renderMatchesView(ev);
         nav('sec-matches');
     }
 
     function renderHome() {
         document.getElementById('list-events').innerHTML = db.events.map(ev => `
-            <div class="card">
-                <strong>${ev.name}</strong> <small>(${ev.date})</small><br>
-                <small>${ev.myDeck} • ${ev.matches.length} matchs</small>
-                <div style="margin-top:10px; display:flex; gap:10px;">
-                    <button onclick="openTournament(${ev.id})">Ouvrir</button>
+            <div class="card event-item">
+                <div class="event-info">
+                    <h3>${ev.name}</h3>
+                    <p>${fmtDate(ev.date)} • ${ev.myDeck}</p>
+                    <p style="color:var(--primary); font-weight:700;">${ev.matches.length} matches</p>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <button onclick="openTournament(${ev.id})" style="padding: 10px 20px;">Ouvrir</button>
                     <button class="btn-dan" onclick="deleteEvent(${ev.id})">Suppr</button>
                 </div>
             </div>
@@ -248,23 +308,21 @@
     }
 
     function deleteEvent(id) {
-        if(confirm("Supprimer ce tournoi ?")) {
+        if(confirm("Supprimer ce tournoi et tous ses matchs ?")) {
             db.events = db.events.filter(e => e.id !== id);
             saveDB(); renderHome();
         }
     }
 
-    // --- GESTION MATCHS ---
     function handleAddMatch() {
         const ev = db.events.find(e => e.id === db.activeId);
-        const match = {
+        ev.matches.push({
             id: Date.now(),
-            oppName: document.getElementById('m-opp-name').value || "Inconnu",
+            oppName: document.getElementById('m-opp-name').value || "Adversaire",
             oppDeck: document.getElementById('sel-opp-deck').value,
             res: document.getElementById('m-res').value,
             comm: document.getElementById('m-comm').value || ""
-        };
-        ev.matches.push(match);
+        });
         saveDB();
         renderMatchesView(ev);
         document.getElementById('m-opp-name').value = "";
@@ -274,10 +332,12 @@
     function renderMatchesView(ev) {
         document.getElementById('matches-list').innerHTML = ev.matches.map(m => `
             <div class="match-item ${m.res}">
-                <strong>${m.res}</strong> vs ${m.oppName} <br>
-                <span class="deck-tag">Adv: ${m.oppDeck}</span><br>
-                <small>${m.comm}</small>
-                <button class="btn-dan" style="position:absolute; top:5px; right:5px;" onclick="deleteMatch(${m.id})">X</button>
+                <div class="match-header">
+                    <span>${m.res === 'WIN' ? '✅ Victoire' : '❌ Défaite'} vs ${m.oppName}</span>
+                    <button class="btn-dan" style="padding:4px 8px" onclick="deleteMatch(${m.id})">X</button>
+                </div>
+                <div class="deck-tag">Deck Adv: ${m.oppDeck}</div>
+                ${m.comm ? `<div class="match-comment">"${m.comm}"</div>` : ''}
             </div>
         `).join('');
     }
@@ -288,7 +348,6 @@
         saveDB(); renderMatchesView(ev);
     }
 
-    // --- STATS & DATA ---
     function renderStatsView() {
         let stats = {};
         db.events.forEach(ev => {
@@ -298,20 +357,32 @@
                 else stats[ev.myDeck].l++;
             });
         });
-        let html = "";
+        
+        let html = "<h2>Ratio par Deck joué</h2>";
         for(let d in stats) {
             let total = stats[d].w + stats[d].l;
             let wr = total > 0 ? Math.round((stats[d].w / total) * 100) : 0;
-            html += `<div class="stats-row"><strong>${d}</strong> <span>${stats[d].w}W - ${stats[d].l}L (${wr}%)</span></div>`;
+            html += `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; font-weight:700;">
+                        <span>${d}</span>
+                        <span>${wr}%</span>
+                    </div>
+                    <div style="font-size:0.85rem; color:var(--text-sub); margin-top:4px;">
+                        ${stats[d].w} Victoires • ${stats[d].l} Défaites
+                    </div>
+                    <div class="stat-bar-bg">
+                        <div class="stat-bar-fill" style="width: ${wr}%; background: ${wr > 50 ? 'var(--win)' : 'var(--primary)'}"></div>
+                    </div>
+                </div>`;
         }
-        document.getElementById('render-stats').innerHTML = html || "Aucun match enregistré.";
+        document.getElementById('render-stats').innerHTML = html || "<div class='card'>Aucune donnée.</div>";
     }
 
     function exportData() {
-        const blob = new Blob([JSON.stringify(db)], {type: "application/json"});
+        const b = new Blob([JSON.stringify(db)], {type: "application/json"});
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = "sauvegarde_tournois.json";
+        a.href = URL.createObjectURL(b); a.download = `backup_tcg_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
     }
 
