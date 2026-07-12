@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TCG Tracker Pro</title>
+    <title>TCG Tracker Meta-Data</title>
     <style>
         :root { 
             --primary: #3b82f6; --primary-dark: #2563eb;
@@ -49,7 +49,8 @@
         .match-item.WIN { border-color: var(--win); background: #f0fdf4; }
         .match-item.LOSE { border-color: var(--lose); background: #fef2f2; }
         
-        .stat-card { cursor: pointer; }
+        .stat-card { cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+        .stat-card:active { background: #f8fafc; border-color: var(--primary); }
         .stat-bar-bg { background: #e2e8f0; height: 8px; border-radius: 4px; margin-top: 8px; overflow: hidden; }
         .stat-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
         
@@ -60,20 +61,19 @@
 </head>
 <body>
 
-    <header><h1>🏆 TCG Tracker</h1></header>
+    <header><h1>🏆 Meta Tracker</h1></header>
 
-    <!-- ACCUEIL -->
+    <!-- SECTION : ACCUEIL -->
     <div id="sec-home">
         <button onclick="nav('sec-new-event')">➕ Nouveau Tournoi</button>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
             <button class="btn-sec" onclick="nav('sec-decks')">🎴 Decks</button>
-            <button class="btn-sec" onclick="nav('sec-stats')">📊 Stats</button>
+            <button class="btn-sec" onclick="nav('sec-stats')">📊 Stats Meta</button>
         </div>
         
         <h2 style="margin: 25px 0 15px 0; font-size: 1.2rem;">Historique</h2>
         <div id="list-events"></div>
 
-        <!-- ZONE DE SAUVEGARDE (JSON) -->
         <div style="margin-top:40px; display:flex; gap:10px; padding: 20px 0; border-top: 1px solid #e2e8f0;">
             <button class="btn-sec" style="font-size:0.75rem; flex:1" onclick="exportData()">💾 Sauver JSON</button>
             <button class="btn-sec" style="font-size:0.75rem; flex:1" onclick="document.getElementById('fileIn').click()">📂 Charger JSON</button>
@@ -81,7 +81,7 @@
         </div>
     </div>
 
-    <!-- NOUVEAU TOURNOI -->
+    <!-- SECTION : NOUVEAU TOURNOI -->
     <div id="sec-new-event" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
         <div class="card" style="margin-top: 15px;">
@@ -100,7 +100,7 @@
         </div>
     </div>
 
-    <!-- MATCHS -->
+    <!-- SECTION : MATCHS -->
     <div id="sec-matches" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour Accueil</button>
         <div class="card" style="margin-top: 15px; border-left: 5px solid var(--primary);">
@@ -121,11 +121,11 @@
                 <option value="LOSE">❌ DÉFAITE</option>
             </select>
             <textarea id="m-comm" rows="2" placeholder="Commentaire..."></textarea>
-            <button onclick="handleAddMatch()">Enregistrer le Match</button>
+            <button onclick="handleAddMatch()">Enregistrer</button>
         </div>
     </div>
 
-    <!-- GESTION DECKS -->
+    <!-- SECTION : GESTION DECKS -->
     <div id="sec-decks" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
         <div class="card" style="margin-top: 15px;">
@@ -146,17 +146,16 @@
         </div>
     </div>
 
-    <!-- STATS -->
+    <!-- SECTION : STATS -->
     <div id="sec-stats" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
-        <p style="font-size: 0.8rem; color: var(--text-sub); margin: 10px 5px;">Cliquez sur un deck pour voir les matchups.</p>
+        <p style="font-size: 0.8rem; color: var(--text-sub); margin: 10px 5px;">Classé par taux de victoire (cliquez pour les matchups).</p>
         <div id="render-stats"></div>
     </div>
 
 <script>
     let db = { events: [], myDecks: ["Deck Standard"], oppDecks: ["Inconnu"], activeId: null };
 
-    // Format DD/MM/YY
     function fmtDate(isoStr) {
         if(!isoStr) return "--/--/--";
         const d = new Date(isoStr);
@@ -224,7 +223,7 @@
     }
 
     function renderHome() {
-        document.getElementById('list-events').innerHTML = db.events.map(ev => `<div class="card" style="display:flex; justify-content:space-between; align-items:center;"><div><h3 style="margin:0">${ev.name}</h3><p style="margin:5px 0 0 0; font-size:0.8rem; color:var(--text-sub)">${fmtDate(ev.date)} • ${ev.myDeck} • <b>${ev.matches.length} m.</b></p></div><div style="display:flex; flex-direction:column; gap:5px;"><button onclick="openTournament(${ev.id})">Ouvrir</button><button class="btn-dan" onclick="if(confirm('Suppr?')){db.events=db.events.filter(e=>e.id!==${ev.id});saveDB();renderHome();}">X</button></div></div>`).join('');
+        document.getElementById('list-events').innerHTML = db.events.map(ev => `<div class="card" style="display:flex; justify-content:space-between; align-items:center;"><div><h3 style="margin:0">${ev.name}</h3><p style="margin:5px 0 0 0; font-size:0.8rem; color:var(--text-sub)">${fmtDate(ev.date)} • ${ev.myDeck} • <b>${ev.matches.length} m.</b></p></div><div style="display:flex; flex-direction:column; gap:5px;"><button onclick="openTournament(${ev.id})">Ouvrir</button><button class="btn-dan" onclick="if(confirm('Supprimer?')){db.events=db.events.filter(e=>e.id!==${ev.id});saveDB();renderHome();}">X</button></div></div>`).join('');
     }
 
     function handleAddMatch() {
@@ -252,28 +251,63 @@
                 if(m.res === 'WIN') stats[ev.myDeck].matchups[m.oppDeck].w++; else stats[ev.myDeck].matchups[m.oppDeck].l++;
             });
         });
+
+        // 1. Transformer en tableau pour trier mes decks par WR global
+        let myDecksSorted = Object.keys(stats).sort((a, b) => {
+            let wrA = stats[a].w / (stats[a].w + stats[a].l || 1);
+            let wrB = stats[b].w / (stats[b].w + stats[b].l || 1);
+            return wrB - wrA;
+        });
+        
         let html = "";
-        for(let d in stats) {
+        myDecksSorted.forEach(d => {
             let total = stats[d].w + stats[d].l;
             let wr = total > 0 ? Math.round((stats[d].w / total) * 100) : 0;
             let deckId = d.replace(/\s+/g, '-');
-            html += `<div class="card stat-card" onclick="toggleMatchup('${d}')"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-weight:800">${d}</span><span style="font-weight:800; background:#f1f5f9; padding:4px 8px; border-radius:8px;">${wr}%</span></div><div style="font-size:0.8rem; color:var(--text-sub); margin-top:5px;">Total: ${stats[d].w}W - ${stats[d].l}L</div><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${wr}%; background:${wr > 50 ? 'var(--win)' : 'var(--primary)'}"></div></div><div id="detail-${deckId}" class="matchup-detail hidden">`;
-            for(let opp in stats[d].matchups) {
-                let mw = stats[d].matchups[opp].w; let ml = stats[d].matchups[opp].l; let mt = mw + ml; let mwr = Math.round((mw / mt) * 100);
-                html += `<div class="matchup-row"><div style="display:flex; justify-content:space-between; font-size:0.8rem"><span>vs <b>${opp}</b></span><span>${mw}W-${ml}L (${mwr}%)</span></div><div class="stat-bar-bg" style="height:4px"><div class="stat-bar-fill" style="width:${mwr}%; background:${mwr >= 50 ? 'var(--win)' : 'var(--lose)'}"></div></div></div>`;
-            }
+            
+            html += `<div class="card stat-card" onclick="toggleMatchup('${d}')">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:800; font-size:1.1rem">${d}</span>
+                    <span style="background:#f1f5f9; padding:4px 8px; border-radius:8px; font-weight:800">${wr}%</span>
+                </div>
+                <div style="font-size:0.8rem; color:var(--text-sub); margin-top:5px;">${stats[d].w}W - ${stats[d].l}L (Total: ${total})</div>
+                <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${wr}%; background:${wr > 50 ? 'var(--win)' : 'var(--primary)'}"></div></div>
+                
+                <div id="detail-${deckId}" class="matchup-detail hidden">
+                    <p style="font-weight:bold; margin-bottom:10px; color:var(--primary); font-size:0.8rem;">Matchups (par Winrate décroissant) :</p>`;
+            
+            // 2. Trier les matchups adverses par Winrate décroissant
+            let sortedOppDecks = Object.keys(stats[d].matchups).sort((a, b) => {
+                let wrA = stats[d].matchups[a].w / (stats[d].matchups[a].w + stats[d].matchups[a].l || 1);
+                let wrB = stats[d].matchups[b].w / (stats[d].matchups[b].w + stats[d].matchups[b].l || 1);
+                return wrB - wrA;
+            });
+
+            sortedOppDecks.forEach(opp => {
+                let mw = stats[d].matchups[opp].w; 
+                let ml = stats[d].matchups[opp].l; 
+                let mt = mw + ml; 
+                let mwr = Math.round((mw / mt) * 100);
+                html += `<div class="matchup-row">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem">
+                        <span>vs <b>${opp}</b></span>
+                        <span>${mw}W-${ml}L (${mwr}%)</span>
+                    </div>
+                    <div class="stat-bar-bg" style="height:4px; margin-top:4px;">
+                        <div class="stat-bar-fill" style="width:${mwr}%; background:${mwr >= 50 ? 'var(--win)' : 'var(--lose)'}"></div>
+                    </div>
+                </div>`;
+            });
             html += `</div></div>`;
-        }
+        });
         document.getElementById('render-stats').innerHTML = html || "<div class='card'>Aucune donnée.</div>";
     }
 
-    // --- FONCTIONS IMPORT / EXPORT ---
     function exportData() {
         const dataStr = JSON.stringify(db);
         const blob = new Blob([dataStr], {type: "application/json"});
-        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
+        a.href = URL.createObjectURL(blob);
         a.download = `backup_tcg_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
     }
@@ -284,16 +318,10 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                const imported = JSON.parse(e.target.result);
-                if(imported.events) {
-                    db = imported;
-                    saveDB();
-                    loadDB();
-                    alert("Données chargées avec succès !");
-                }
-            } catch(err) {
-                alert("Erreur lors du chargement du fichier.");
-            }
+                db = JSON.parse(e.target.result);
+                saveDB(); loadDB(); nav('sec-home');
+                alert("Données chargées !");
+            } catch(err) { alert("Fichier invalide."); }
         };
         reader.readAsText(file);
     }
