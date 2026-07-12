@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tournoi Tracker Analytics</title>
+    <title>TCG Tracker Pro</title>
     <style>
         :root { 
             --primary: #3b82f6; --primary-dark: #2563eb;
@@ -18,7 +18,7 @@
         }
 
         header { padding: 20px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; }
-        h1 { margin: 0; font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        h1 { margin: 0; font-size: 1.5rem; font-weight: 800; }
 
         .card { 
             background: var(--card); padding: 18px; border-radius: 16px; 
@@ -49,37 +49,39 @@
         .match-item.WIN { border-color: var(--win); background: #f0fdf4; }
         .match-item.LOSE { border-color: var(--lose); background: #fef2f2; }
         
-        /* Stats Styles */
-        .stat-card { cursor: pointer; transition: background 0.2s; }
-        .stat-card:active { background: #f8fafc; }
+        .stat-card { cursor: pointer; }
         .stat-bar-bg { background: #e2e8f0; height: 8px; border-radius: 4px; margin-top: 8px; overflow: hidden; }
         .stat-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
         
-        .matchup-detail { 
-            margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e2e8f0;
-            font-size: 0.9rem;
-        }
+        .matchup-detail { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e2e8f0; font-size: 0.9rem; }
         .matchup-row { margin-bottom: 12px; }
         .flex-row { display: flex; gap: 10px; align-items: flex-start; }
-        .tag { font-size: 0.7rem; background: #3b82f6; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 5px;}
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>🏆 Tournoi Tracker</h1>
-    </header>
+    <header><h1>🏆 TCG Tracker</h1></header>
 
+    <!-- ACCUEIL -->
     <div id="sec-home">
         <button onclick="nav('sec-new-event')">➕ Nouveau Tournoi</button>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
             <button class="btn-sec" onclick="nav('sec-decks')">🎴 Decks</button>
             <button class="btn-sec" onclick="nav('sec-stats')">📊 Stats</button>
         </div>
+        
         <h2 style="margin: 25px 0 15px 0; font-size: 1.2rem;">Historique</h2>
         <div id="list-events"></div>
+
+        <!-- ZONE DE SAUVEGARDE (JSON) -->
+        <div style="margin-top:40px; display:flex; gap:10px; padding: 20px 0; border-top: 1px solid #e2e8f0;">
+            <button class="btn-sec" style="font-size:0.75rem; flex:1" onclick="exportData()">💾 Sauver JSON</button>
+            <button class="btn-sec" style="font-size:0.75rem; flex:1" onclick="document.getElementById('fileIn').click()">📂 Charger JSON</button>
+            <input type="file" id="fileIn" class="hidden" onchange="importData(event)">
+        </div>
     </div>
 
+    <!-- NOUVEAU TOURNOI -->
     <div id="sec-new-event" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
         <div class="card" style="margin-top: 15px;">
@@ -98,6 +100,7 @@
         </div>
     </div>
 
+    <!-- MATCHS -->
     <div id="sec-matches" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour Accueil</button>
         <div class="card" style="margin-top: 15px; border-left: 5px solid var(--primary);">
@@ -118,10 +121,11 @@
                 <option value="LOSE">❌ DÉFAITE</option>
             </select>
             <textarea id="m-comm" rows="2" placeholder="Commentaire..."></textarea>
-            <button onclick="handleAddMatch()">Enregistrer</button>
+            <button onclick="handleAddMatch()">Enregistrer le Match</button>
         </div>
     </div>
 
+    <!-- GESTION DECKS -->
     <div id="sec-decks" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
         <div class="card" style="margin-top: 15px;">
@@ -142,15 +146,17 @@
         </div>
     </div>
 
+    <!-- STATS -->
     <div id="sec-stats" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
-        <p style="font-size: 0.8rem; color: var(--text-sub); margin: 10px 5px;">Cliquez sur un deck pour voir le détail des Matchups.</p>
+        <p style="font-size: 0.8rem; color: var(--text-sub); margin: 10px 5px;">Cliquez sur un deck pour voir les matchups.</p>
         <div id="render-stats"></div>
     </div>
 
 <script>
     let db = { events: [], myDecks: ["Deck Standard"], oppDecks: ["Inconnu"], activeId: null };
 
+    // Format DD/MM/YY
     function fmtDate(isoStr) {
         if(!isoStr) return "--/--/--";
         const d = new Date(isoStr);
@@ -228,12 +234,12 @@
     }
 
     function renderMatchesView(ev) {
-        document.getElementById('matches-list').innerHTML = ev.matches.map(m => `<div class="match-item ${m.res}"><strong>${m.res} vs ${m.oppName}</strong><div style="font-size:0.8rem; color:var(--text-sub)">Deck Adv: ${m.oppDeck}</div><div style="font-style:italic; font-size:0.8rem">${m.comm}</div><button class="btn-dan" style="position:absolute; top:5px; right:5px;" onclick="if(confirm('Match?')){const ev=db.events.find(e=>e.id===db.activeId);ev.matches=ev.matches.filter(ma=>ma.id!==${m.id});saveDB();renderMatchesView(ev);}">X</button></div>`).join('');
+        document.getElementById('matches-list').innerHTML = ev.matches.map(m => `<div class="match-item ${m.res}"><strong>${m.res} vs ${m.oppName}</strong><div style="font-size:0.8rem; color:var(--text-sub)">Deck Adv: ${m.oppDeck}</div><div style="font-style:italic; font-size:0.8rem">${m.comm}</div><button class="btn-dan" style="position:absolute; top:5px; right:5px;" onclick="if(confirm('Supprimer?')){const ev=db.events.find(e=>e.id===db.activeId);ev.matches=ev.matches.filter(ma=>ma.id!==${m.id});saveDB();renderMatchesView(ev);}">X</button></div>`).join('');
     }
 
     function toggleMatchup(deckName) {
-        const el = document.getElementById('detail-' + deckName.replace(/\s+/g, '-'));
-        el.classList.toggle('hidden');
+        const id = 'detail-' + deckName.replace(/\s+/g, '-');
+        document.getElementById(id).classList.toggle('hidden');
     }
 
     function renderStatsView() {
@@ -246,23 +252,53 @@
                 if(m.res === 'WIN') stats[ev.myDeck].matchups[m.oppDeck].w++; else stats[ev.myDeck].matchups[m.oppDeck].l++;
             });
         });
-        
         let html = "";
         for(let d in stats) {
             let total = stats[d].w + stats[d].l;
             let wr = total > 0 ? Math.round((stats[d].w / total) * 100) : 0;
             let deckId = d.replace(/\s+/g, '-');
-            
-            html += `<div class="card stat-card" onclick="toggleMatchup('${d}')">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-weight:800; font-size:1.1rem">${d}</span>
-                    <span style="background:var(--bg); padding:4px 8px; border-radius:8px; font-weight:800">${wr}%</span>
-                </div>
-                <div style="font-size:0.8rem; color:var(--text-sub); margin-top:5px;">Total: ${stats[d].w}W - ${stats[d].l}L</div>
-                <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${wr}%; background:${wr > 50 ? 'var(--win)' : 'var(--primary)'}"></div></div>
-                
-                <div id="detail-${deckId}" class="matchup-detail hidden">
-                    <p style="font-weight:bold; margin-bottom:10px; color:var(--primary)">Matchups détaillés :</p>`;
-            
+            html += `<div class="card stat-card" onclick="toggleMatchup('${d}')"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-weight:800">${d}</span><span style="font-weight:800; background:#f1f5f9; padding:4px 8px; border-radius:8px;">${wr}%</span></div><div style="font-size:0.8rem; color:var(--text-sub); margin-top:5px;">Total: ${stats[d].w}W - ${stats[d].l}L</div><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${wr}%; background:${wr > 50 ? 'var(--win)' : 'var(--primary)'}"></div></div><div id="detail-${deckId}" class="matchup-detail hidden">`;
             for(let opp in stats[d].matchups) {
-                let mWin = stats[d].matchups[opp].w;
+                let mw = stats[d].matchups[opp].w; let ml = stats[d].matchups[opp].l; let mt = mw + ml; let mwr = Math.round((mw / mt) * 100);
+                html += `<div class="matchup-row"><div style="display:flex; justify-content:space-between; font-size:0.8rem"><span>vs <b>${opp}</b></span><span>${mw}W-${ml}L (${mwr}%)</span></div><div class="stat-bar-bg" style="height:4px"><div class="stat-bar-fill" style="width:${mwr}%; background:${mwr >= 50 ? 'var(--win)' : 'var(--lose)'}"></div></div></div>`;
+            }
+            html += `</div></div>`;
+        }
+        document.getElementById('render-stats').innerHTML = html || "<div class='card'>Aucune donnée.</div>";
+    }
+
+    // --- FONCTIONS IMPORT / EXPORT ---
+    function exportData() {
+        const dataStr = JSON.stringify(db);
+        const blob = new Blob([dataStr], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `backup_tcg_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if(imported.events) {
+                    db = imported;
+                    saveDB();
+                    loadDB();
+                    alert("Données chargées avec succès !");
+                }
+            } catch(err) {
+                alert("Erreur lors du chargement du fichier.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    loadDB();
+</script>
+</body>
+</html>
