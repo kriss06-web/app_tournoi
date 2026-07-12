@@ -8,154 +8,183 @@
         :root { --primary: #2563eb; --bg: #f1f5f9; --text: #1e293b; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        h1, h2 { margin-top: 0; color: var(--primary); }
+        h1, h2, h3 { margin-top: 0; color: var(--primary); }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 16px; }
         .btn-secondary { background: #64748b; }
-        .btn-danger { background: #ef4444; margin-top: 10px; }
+        .btn-danger { background: #ef4444; }
         .btn-small { padding: 5px 10px; width: auto; font-size: 12px; display: inline-block; margin: 2px; }
         .match-item { border-left: 5px solid #ddd; padding: 10px; margin-bottom: 10px; background: #fff; border-radius: 4px; position: relative; }
         .win { border-color: #22c55e; }
         .lose { border-color: #ef4444; }
         .hidden { display: none; }
         .deck-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 8px 0; }
+        .tab-buttons { display: flex; gap: 5px; margin-bottom: 10px; }
+        .tab-buttons button { font-size: 12px; padding: 8px; }
     </style>
 </head>
 <body>
 
+    <!-- MENU PRINCIPAL -->
     <div id="section-liste">
         <h1>🏆 Mes Tournois</h1>
         <button onclick="showSection('section-nouveau')">➕ Nouvel Event</button>
-        <button class="btn-secondary" onclick="showSection('section-decks')" style="margin-top:10px">🎴 Gérer mes Decks</button>
+        <button class="btn-secondary" onclick="showSection('section-decks')" style="margin-top:10px">🎴 Gérer mes Decks / Adversaires</button>
         <button class="btn-secondary" onclick="showSection('section-stats')" style="margin-top:10px">📊 Mes Performances</button>
         
         <h2 style="margin-top:25px;">Historique</h2>
         <div id="liste-events"></div>
         
         <div style="display:flex; gap:10px; margin-top:30px;">
-            <button class="btn-secondary" style="font-size:12px" onclick="exportData()">💾 Export JSON</button>
-            <button class="btn-secondary" style="font-size:12px" onclick="document.getElementById('importFile').click()">📂 Import</button>
+            <button class="btn-secondary" style="font-size:10px" onclick="exportData()">💾 Export JSON</button>
+            <button class="btn-secondary" style="font-size:10px" onclick="document.getElementById('importFile').click()">📂 Import</button>
             <input type="file" id="importFile" class="hidden" onchange="importData(event)">
         </div>
     </div>
 
+    <!-- NOUVEL EVENT -->
     <div id="section-nouveau" class="hidden">
         <button class="btn-secondary" onclick="showSection('section-liste')">⬅ Retour</button>
         <div class="card">
-            <h2>Nouvel Événement</h2>
-            <input type="text" id="event-nom" placeholder="Nom (ex: Regional Paris)">
+            <h2>Nouveau Tournoi</h2>
+            <input type="text" id="event-nom" placeholder="Nom du tournoi">
             <input type="date" id="event-date">
             <input type="text" id="event-lieu" placeholder="Lieu (Optionnel)">
-            <button onclick="creerEvenement()">Créer le tournoi</button>
+            <label><strong>Deck que je vais jouer :</strong></label>
+            <select id="mon-deck-event"></select>
+            <button onclick="creerEvenement()">Démarrer le tournoi</button>
         </div>
     </div>
 
+    <!-- MATCHS D'UN EVENT -->
     <div id="section-matchs" class="hidden">
         <button class="btn-secondary" onclick="showSection('section-liste')">⬅ Retour</button>
         <div class="card">
             <h2 id="current-event-title">Matchs</h2>
+            <p id="current-event-mydeck" style="font-style: italic; color: #64748b;"></p>
             <div id="matchs-container"></div>
             <hr>
-            <h3>Ajouter une rencontre</h3>
+            <h3>Ajouter un match</h3>
             <input type="text" id="opp-nom" placeholder="Nom de l'adversaire">
-            <select id="opp-deck"></select>
-            <button class="btn-secondary" style="font-size:12px; width:auto;" onclick="showSection('section-decks')">➕ Gérer les decks</button>
+            <select id="opp-deck-select"></select>
             <select id="mon-resultat">
-                <option value="win">J'ai GAGNÉ (Win)</option>
-                <option value="lose">J'ai PERDU (Lose)</option>
+                <option value="win">VICTOIRE (Win)</option>
+                <option value="lose">DÉFAITE (Lose)</option>
             </select>
-            <textarea id="match-comment" placeholder="Commentaires sur le match..."></textarea>
-            <button onclick="ajouterMatch()">Enregistrer le match</button>
+            <textarea id="match-comment" placeholder="Commentaires..."></textarea>
+            <button onclick="ajouterMatch()">Enregistrer le résultat</button>
         </div>
     </div>
 
+    <!-- GESTION DES DECKS -->
     <div id="section-decks" class="hidden">
         <button class="btn-secondary" onclick="showSection('section-liste')">⬅ Retour</button>
         <div class="card">
-            <h2>Gérer les Decks</h2>
+            <h2>Gestion des Decks</h2>
+            <div class="tab-buttons">
+                <button onclick="renderDecks('mesDecks')">Mes Decks Perso</button>
+                <button class="btn-secondary" onclick="renderDecks('oppDecks')">Decks Adversaires</button>
+            </div>
+            <h3 id="deck-type-title">Mes Decks Perso</h3>
             <input type="text" id="new-deck-name" placeholder="Nom du deck">
             <button onclick="ajouterDeck()">Ajouter ce deck</button>
-            <div id="decks-list" style="margin-top:20px;"></div>
+            <div id="decks-list-render" style="margin-top:20px;"></div>
         </div>
     </div>
 
+    <!-- STATS -->
     <div id="section-stats" class="hidden">
         <button class="btn-secondary" onclick="showSection('section-liste')">⬅ Retour</button>
         <div class="card">
-            <h2>Récap Performances</h2>
+            <h2>Récap par Deck utilisé</h2>
             <div id="stats-content"></div>
         </div>
     </div>
 
 <script>
-    let state = { events: [], decks: ["Exemple Deck A", "Exemple Deck B"], currentEventId: null };
+    let state = { 
+        events: [], 
+        mesDecks: ["Mon Deck A"], 
+        oppDecks: ["Deck adverse X"],
+        currentEventId: null,
+        currentDeckView: 'mesDecks' 
+    };
 
     function init() {
-        const saved = localStorage.getItem('tournoi_db');
+        const saved = localStorage.getItem('tournoi_db_v2');
         if (saved) state = JSON.parse(saved);
         renderEvents();
-        renderDecks();
+        updateAllSelects();
     }
 
     function save() {
-        localStorage.setItem('tournoi_db', JSON.stringify(state));
+        localStorage.setItem('tournoi_db_v2', JSON.stringify(state));
     }
 
     function showSection(id) {
         document.querySelectorAll('body > div').forEach(div => div.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
         if(id === 'section-stats') renderStats();
+        if(id === 'section-decks') renderDecks(state.currentDeckView);
+        if(id === 'section-nouveau') updateAllSelects();
         window.scrollTo(0,0);
     }
 
-    // DECKS
-    function renderDecks() {
-        const list = document.getElementById('decks-list');
-        const select = document.getElementById('opp-deck');
+    // GESTION DECKS
+    function renderDecks(type) {
+        state.currentDeckView = type;
+        document.getElementById('deck-type-title').innerText = type === 'mesDecks' ? "Mes Decks Perso" : "Decks Adversaires";
+        const list = document.getElementById('decks-list-render');
         list.innerHTML = "";
-        select.innerHTML = '<option value="">-- Choisir le deck adverse --</option>';
-        state.decks.sort().forEach((deck, index) => {
+        state[type].sort().forEach((deck, index) => {
             list.innerHTML += `<div class="deck-row">
                 <span>${deck}</span>
-                <div>
-                    <button class="btn-secondary btn-small" onclick="modifierDeck(${index})">Modifier</button>
-                    <button class="btn-danger btn-small" onclick="supprimerDeck(${index})">X</button>
-                </div>
+                <button class="btn-danger btn-small" onclick="supprimerDeck('${type}', ${index})">X</button>
             </div>`;
-            select.innerHTML += `<option value="${deck}">${deck}</option>`;
         });
+        updateAllSelects();
     }
 
     function ajouterDeck() {
         const name = document.getElementById('new-deck-name').value;
+        const type = state.currentDeckView;
         if (name) {
-            state.decks.push(name);
+            state[type].push(name);
             document.getElementById('new-deck-name').value = "";
-            save(); renderDecks();
+            save(); renderDecks(type);
         }
     }
 
-    function modifierDeck(index) {
-        const nouveauNom = prompt("Nouveau nom du deck :", state.decks[index]);
-        if (nouveauNom) {
-            state.decks[index] = nouveauNom;
-            save(); renderDecks();
+    function supprimerDeck(type, index) {
+        if(confirm("Supprimer ce deck ?")) {
+            state[type].splice(index, 1);
+            save(); renderDecks(type);
         }
     }
 
-    function supprimerDeck(index) {
-        if(confirm("Supprimer ce deck de la liste ?")) {
-            state.decks.splice(index, 1);
-            save(); renderDecks();
-        }
+    function updateAllSelects() {
+        const mySelect = document.getElementById('mon-deck-event');
+        const oppSelect = document.getElementById('opp-deck-select');
+        
+        mySelect.innerHTML = state.mesDecks.map(d => `<option value="${d}">${d}</option>`).join('');
+        oppSelect.innerHTML = '<option value="">-- Deck adverse --</option>' + 
+                              state.oppDecks.map(d => `<option value="${d}">${d}</option>`).join('');
     }
 
     // EVENTS
     function creerEvenement() {
         const nom = document.getElementById('event-nom').value || "Tournoi";
-        const date = document.getElementById('event-date').value || new Date().toISOString().split('T')[0];
-        const lieu = document.getElementById('event-lieu').value;
-        const newEvent = { id: Date.now(), nom, date, lieu, matchs: [] };
+        const myDeck = document.getElementById('mon-deck-event').value;
+        if(!myDeck) return alert("Créez d'abord un deck perso dans 'Gérer les decks'");
+        
+        const newEvent = { 
+            id: Date.now(), 
+            nom, 
+            date: document.getElementById('event-date').value || new Date().toISOString().split('T')[0], 
+            lieu: document.getElementById('event-lieu').value,
+            myDeck: myDeck,
+            matchs: [] 
+        };
         state.events.unshift(newEvent);
         save(); renderEvents(); ouvrirEvent(newEvent.id);
     }
@@ -165,47 +194,46 @@
         container.innerHTML = "";
         state.events.forEach(ev => {
             container.innerHTML += `<div class="card">
-                <strong>${ev.date} - ${ev.nom}</strong><br><small>${ev.lieu || ''}</small><br>
-                <span>${ev.matchs.length} matchs</span>
-                <button onclick="ouvrirEvent(${ev.id})">Ouvrir</button>
-                <button class="btn-danger btn-small" onclick="supprimerEvent(${ev.id})">Supprimer l'event</button>
+                <strong>${ev.date} - ${ev.nom}</strong><br>
+                <small>Joué avec : ${ev.myDeck}</small><br>
+                <button onclick="ouvrirEvent(${ev.id})">Ouvrir (${ev.matchs.length} matchs)</button>
+                <button class="btn-danger btn-small" onclick="supprimerEvent(${ev.id})">Supprimer</button>
             </div>`;
         });
-    }
-
-    function supprimerEvent(id) {
-        if(confirm("Supprimer définitivement ce tournoi ?")) {
-            state.events = state.events.filter(e => e.id !== id);
-            save(); renderEvents();
-        }
     }
 
     function ouvrirEvent(id) {
         state.currentEventId = id;
         const ev = state.events.find(e => e.id === id);
         document.getElementById('current-event-title').innerText = ev.nom;
+        document.getElementById('current-event-mydeck').innerText = "Mon deck : " + ev.myDeck;
         renderMatchs();
         showSection('section-matchs');
     }
 
+    function supprimerEvent(id) {
+        if(confirm("Supprimer ce tournoi ?")) {
+            state.events = state.events.filter(e => e.id !== id);
+            save(); renderEvents();
+        }
+    }
+
     // MATCHS
     function ajouterMatch() {
-        const opp = document.getElementById('opp-nom').value;
-        const deck = document.getElementById('opp-deck').value;
-        const res = document.getElementById('mon-resultat').value;
-        const comm = document.getElementById('match-comment').value;
-        if(!deck) return alert("Choisissez un deck adverse");
+        const oppDeck = document.getElementById('opp-deck-select').value;
+        if(!oppDeck) return alert("Sélectionnez le deck adverse");
+        
         const ev = state.events.find(e => e.id === state.currentEventId);
-        ev.matchs.push({ id: Date.now(), opp, deck, res, comm });
+        ev.matchs.push({
+            id: Date.now(),
+            opp: document.getElementById('opp-nom').value || "Inconnu",
+            deck: oppDeck,
+            res: document.getElementById('mon-resultat').value,
+            comm: document.getElementById('match-comment').value
+        });
         save(); renderMatchs();
         document.getElementById('opp-nom').value = "";
         document.getElementById('match-comment').value = "";
-    }
-
-    function supprimerMatch(matchId) {
-        const ev = state.events.find(e => e.id === state.currentEventId);
-        ev.matchs = ev.matchs.filter(m => m.id !== matchId);
-        save(); renderMatchs();
     }
 
     function renderMatchs() {
@@ -214,37 +242,43 @@
         container.innerHTML = "";
         ev.matchs.forEach(m => {
             container.innerHTML += `<div class="match-item ${m.res}">
-                <strong>${m.res.toUpperCase()}</strong> vs ${m.opp || 'Inconnu'} (${m.deck})
+                <strong>${m.res.toUpperCase()}</strong> vs ${m.opp} (${m.deck})
                 <br><small>${m.comm}</small>
                 <button class="btn-danger btn-small" style="position:absolute; right:5px; top:5px;" onclick="supprimerMatch(${m.id})">X</button>
             </div>`;
         });
     }
 
+    function supprimerMatch(matchId) {
+        const ev = state.events.find(e => e.id === state.currentEventId);
+        ev.matchs = ev.matchs.filter(m => m.id !== matchId);
+        save(); renderMatchs();
+    }
+
     // STATS
     function renderStats() {
-        const stats = {};
+        const myDeckStats = {};
         state.events.forEach(ev => {
+            if(!myDeckStats[ev.myDeck]) myDeckStats[ev.myDeck] = { win: 0, lose: 0 };
             ev.matchs.forEach(m => {
-                if(!stats[m.deck]) stats[m.deck] = { win: 0, lose: 0 };
-                stats[m.deck][m.res]++;
+                myDeckStats[ev.myDeck][m.res]++;
             });
         });
         let html = "";
-        for(let deck in stats) {
-            const total = stats[deck].win + stats[deck].lose;
-            const wr = Math.round((stats[deck].win / total) * 100);
-            html += `<div class="deck-row"><strong>${deck}</strong> <span>${stats[deck].win}W - ${stats[deck].lose}L (${wr}%)</span></div>`;
+        for(let d in myDeckStats) {
+            const total = myDeckStats[d].win + myDeckStats[d].lose;
+            const wr = total > 0 ? Math.round((myDeckStats[d].win / total) * 100) : 0;
+            html += `<div class="deck-row"><strong>${d}</strong> <span>${myDeckStats[d].win}W - ${myDeckStats[d].lose}L (${wr}%)</span></div>`;
         }
         document.getElementById('stats-content').innerHTML = html || "Aucune donnée";
     }
 
-    // EXPORT
+    // IMPORT/EXPORT
     function exportData() {
         const blob = new Blob([JSON.stringify(state)], {type: "application/json"});
-        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = "sauvegarde_tournois.json";
+        a.href = URL.createObjectURL(blob);
+        a.download = "sauvegarde_tournois.json";
         a.click();
     }
 
@@ -253,7 +287,7 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             state = JSON.parse(e.target.result);
-            save(); init(); alert("Import réussi !");
+            save(); init(); alert("Données chargées !");
         };
         reader.readAsText(file);
     }
