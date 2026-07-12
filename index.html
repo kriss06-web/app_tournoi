@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TCG Tracker Meta-Data</title>
+    <title>TCG Meta Analytics</title>
     <style>
         :root { 
             --primary: #3b82f6; --primary-dark: #2563eb;
@@ -49,8 +49,8 @@
         .match-item.WIN { border-color: var(--win); background: #f0fdf4; }
         .match-item.LOSE { border-color: var(--lose); background: #fef2f2; }
         
-        .stat-card { cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
-        .stat-card:active { background: #f8fafc; border-color: var(--primary); }
+        .stat-card { cursor: pointer; transition: transform 0.1s; }
+        .stat-card:active { transform: scale(0.99); }
         .stat-bar-bg { background: #e2e8f0; height: 8px; border-radius: 4px; margin-top: 8px; overflow: hidden; }
         .stat-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
         
@@ -129,7 +129,7 @@
     <div id="sec-decks" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
         <div class="card" style="margin-top: 15px;">
-            <h3>Mes Decks</h3>
+            <h3>Mes Decks Perso</h3>
             <div class="flex-row">
                 <input type="text" id="in-my-deck" placeholder="Nom">
                 <button class="btn-plus" onclick="manualAdd('myDecks', 'in-my-deck')">+</button>
@@ -149,7 +149,7 @@
     <!-- SECTION : STATS -->
     <div id="sec-stats" class="hidden">
         <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
-        <p style="font-size: 0.8rem; color: var(--text-sub); margin: 10px 5px;">Classé par taux de victoire (cliquez pour les matchups).</p>
+        <p style="font-size: 0.8rem; color: var(--text-sub); margin: 10px 5px;">Trié par : Nombre de victoires, puis Winrate.</p>
         <div id="render-stats"></div>
     </div>
 
@@ -241,6 +241,21 @@
         document.getElementById(id).classList.toggle('hidden');
     }
 
+    // --- ALGORITHME DE TRI LOGIQUE ---
+    function sortStatsLogic(dataObj, a, b) {
+        const winA = dataObj[a].w;
+        const winB = dataObj[b].w;
+        const totalA = winA + dataObj[a].l || 1;
+        const totalB = winB + dataObj[b].l || 1;
+        const wrA = winA / totalA;
+        const wrB = winB / totalB;
+
+        // 1. Priorité au nombre de victoires (Volume)
+        if (winB !== winA) return winB - winA;
+        // 2. Si victoires égales, priorité au Winrate (Qualité)
+        return wrB - wrA;
+    }
+
     function renderStatsView() {
         let stats = {};
         db.events.forEach(ev => {
@@ -252,12 +267,8 @@
             });
         });
 
-        // 1. Transformer en tableau pour trier mes decks par WR global
-        let myDecksSorted = Object.keys(stats).sort((a, b) => {
-            let wrA = stats[a].w / (stats[a].w + stats[a].l || 1);
-            let wrB = stats[b].w / (stats[b].w + stats[b].l || 1);
-            return wrB - wrA;
-        });
+        // Tri de mes decks
+        let myDecksSorted = Object.keys(stats).sort((a, b) => sortStatsLogic(stats, a, b));
         
         let html = "";
         myDecksSorted.forEach(d => {
@@ -270,18 +281,14 @@
                     <span style="font-weight:800; font-size:1.1rem">${d}</span>
                     <span style="background:#f1f5f9; padding:4px 8px; border-radius:8px; font-weight:800">${wr}%</span>
                 </div>
-                <div style="font-size:0.8rem; color:var(--text-sub); margin-top:5px;">${stats[d].w}W - ${stats[d].l}L (Total: ${total})</div>
+                <div style="font-size:0.8rem; color:var(--text-sub); margin-top:5px;"><b>${stats[d].w} Victoires</b> - ${stats[d].l} Défaites</div>
                 <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${wr}%; background:${wr > 50 ? 'var(--win)' : 'var(--primary)'}"></div></div>
                 
                 <div id="detail-${deckId}" class="matchup-detail hidden">
-                    <p style="font-weight:bold; margin-bottom:10px; color:var(--primary); font-size:0.8rem;">Matchups (par Winrate décroissant) :</p>`;
+                    <p style="font-weight:bold; margin-bottom:10px; color:var(--primary); font-size:0.8rem;">Matchups par Volume/WR :</p>`;
             
-            // 2. Trier les matchups adverses par Winrate décroissant
-            let sortedOppDecks = Object.keys(stats[d].matchups).sort((a, b) => {
-                let wrA = stats[d].matchups[a].w / (stats[d].matchups[a].w + stats[d].matchups[a].l || 1);
-                let wrB = stats[d].matchups[b].w / (stats[d].matchups[b].w + stats[d].matchups[b].l || 1);
-                return wrB - wrA;
-            });
+            // Tri des matchups adverses
+            let sortedOppDecks = Object.keys(stats[d].matchups).sort((a, b) => sortStatsLogic(stats[d].matchups, a, b));
 
             sortedOppDecks.forEach(opp => {
                 let mw = stats[d].matchups[opp].w; 
@@ -291,7 +298,7 @@
                 html += `<div class="matchup-row">
                     <div style="display:flex; justify-content:space-between; font-size:0.8rem">
                         <span>vs <b>${opp}</b></span>
-                        <span>${mw}W-${ml}L (${mwr}%)</span>
+                        <span><b>${mw}W</b>-${ml}L (${mwr}%)</span>
                     </div>
                     <div class="stat-bar-bg" style="height:4px; margin-top:4px;">
                         <div class="stat-bar-fill" style="width:${mwr}%; background:${mwr >= 50 ? 'var(--win)' : 'var(--lose)'}"></div>
@@ -306,8 +313,9 @@
     function exportData() {
         const dataStr = JSON.stringify(db);
         const blob = new Blob([dataStr], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
+        a.href = url;
         a.download = `backup_tcg_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
     }
