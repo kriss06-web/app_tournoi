@@ -3,296 +3,337 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tracker de Tournois</title>
+    <title>Tracker Tournoi Pro</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f1f5f9; --text: #1e293b; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        h1, h2, h3 { margin-top: 0; color: var(--primary); }
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 16px; }
-        .btn-secondary { background: #64748b; }
-        .btn-danger { background: #ef4444; }
-        .btn-small { padding: 5px 10px; width: auto; font-size: 12px; display: inline-block; margin: 2px; }
-        .match-item { border-left: 5px solid #ddd; padding: 10px; margin-bottom: 10px; background: #fff; border-radius: 4px; position: relative; }
-        .win { border-color: #22c55e; }
-        .lose { border-color: #ef4444; }
+        :root { --primary: #2563eb; --secondary: #64748b; --success: #22c55e; --danger: #ef4444; --bg: #f8fafc; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #1e293b; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h1, h2 { margin-top: 0; color: var(--primary); font-size: 1.5rem; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.9rem; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        
+        /* Flex rows pour les sélections avec bouton + */
+        .flex-row { display: flex; gap: 8px; align-items: center; }
+        .btn-plus { background: var(--success); width: 50px; height: 45px; flex-shrink: 0; }
+
+        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
+        .btn-sec { background: var(--secondary); }
+        .btn-dan { background: var(--danger); font-size: 0.8rem; padding: 5px; width: auto; }
+        
+        .match-item { border-left: 6px solid #ddd; padding: 10px; margin: 10px 0; background: #fff; border-radius: 6px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .WIN { border-color: var(--success); }
+        .LOSE { border-color: var(--danger); }
         .hidden { display: none; }
-        .deck-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 8px 0; }
-        .tab-buttons { display: flex; gap: 5px; margin-bottom: 10px; }
-        .tab-buttons button { font-size: 12px; padding: 8px; }
+        
+        .deck-tag { display: inline-block; background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-top: 4px; }
+        .stats-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
 
-    <!-- MENU PRINCIPAL -->
-    <div id="section-liste">
+    <!-- SECTION : ACCUEIL -->
+    <div id="sec-home">
         <h1>🏆 Mes Tournois</h1>
-        <button onclick="showSection('section-nouveau')">➕ Nouvel Event</button>
-        <button class="btn-secondary" onclick="showSection('section-decks')" style="margin-top:10px">🎴 Gérer mes Decks / Adversaires</button>
-        <button class="btn-secondary" onclick="showSection('section-stats')" style="margin-top:10px">📊 Mes Performances</button>
+        <button onclick="nav('sec-new-event')">➕ Nouveau Tournoi</button>
+        <button class="btn-sec" onclick="nav('sec-decks')" style="margin-top:10px">🎴 Gérer tous les Decks</button>
+        <button class="btn-sec" onclick="nav('sec-stats')" style="margin-top:10px">📊 Mes Stats</button>
+
+        <h2 style="margin-top:30px">Historique</h2>
+        <div id="list-events"></div>
         
-        <h2 style="margin-top:25px;">Historique</h2>
-        <div id="liste-events"></div>
-        
-        <div style="display:flex; gap:10px; margin-top:30px;">
-            <button class="btn-secondary" style="font-size:10px" onclick="exportData()">💾 Export JSON</button>
-            <button class="btn-secondary" style="font-size:10px" onclick="document.getElementById('importFile').click()">📂 Import</button>
-            <input type="file" id="importFile" class="hidden" onchange="importData(event)">
+        <div style="margin-top:40px; display:flex; gap:10px;">
+            <button class="btn-sec" style="font-size:10px" onclick="exportJSON()">💾 Export</button>
+            <button class="btn-sec" style="font-size:10px" onclick="document.getElementById('fileIn').click()">📂 Import</button>
+            <input type="file" id="fileIn" class="hidden" onchange="importJSON(event)">
         </div>
     </div>
 
-    <!-- NOUVEL EVENT -->
-    <div id="section-nouveau" class="hidden">
-        <button class="btn-secondary" onclick="showSection('section-liste')">⬅ Retour</button>
+    <!-- SECTION : NOUVEAU TOURNOI -->
+    <div id="sec-new-event" class="hidden">
+        <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
         <div class="card">
-            <h2>Nouveau Tournoi</h2>
-            <input type="text" id="event-nom" placeholder="Nom du tournoi">
-            <input type="date" id="event-date">
-            <input type="text" id="event-lieu" placeholder="Lieu (Optionnel)">
-            <label><strong>Deck que je vais jouer :</strong></label>
-            <select id="mon-deck-event"></select>
-            <button onclick="creerEvenement()">Démarrer le tournoi</button>
-        </div>
-    </div>
-
-    <!-- MATCHS D'UN EVENT -->
-    <div id="section-matchs" class="hidden">
-        <button class="btn-secondary" onclick="showSection('section-liste')">⬅ Retour</button>
-        <div class="card">
-            <h2 id="current-event-title">Matchs</h2>
-            <p id="current-event-mydeck" style="font-style: italic; color: #64748b;"></p>
-            <div id="matchs-container"></div>
-            <hr>
-            <h3>Ajouter un match</h3>
-            <input type="text" id="opp-nom" placeholder="Nom de l'adversaire">
-            <select id="opp-deck-select"></select>
-            <select id="mon-resultat">
-                <option value="win">VICTOIRE (Win)</option>
-                <option value="lose">DÉFAITE (Lose)</option>
-            </select>
-            <textarea id="match-comment" placeholder="Commentaires..."></textarea>
-            <button onclick="ajouterMatch()">Enregistrer le résultat</button>
-        </div>
-    </div>
-
-    <!-- GESTION DES DECKS -->
-    <div id="section-decks" class="hidden">
-        <button class="btn-secondary" onclick="showSection('section-liste')">⬅ Retour</button>
-        <div class="card">
-            <h2>Gestion des Decks</h2>
-            <div class="tab-buttons">
-                <button onclick="renderDecks('mesDecks')">Mes Decks Perso</button>
-                <button class="btn-secondary" onclick="renderDecks('oppDecks')">Decks Adversaires</button>
+            <h2>Démarrer un Tournoi</h2>
+            <label>Nom du tournoi</label>
+            <input type="text" id="ev-name" placeholder="ex: Regional Cannes">
+            <label>Date & Lieu</label>
+            <input type="date" id="ev-date">
+            <input type="text" id="ev-place" placeholder="Lieu (optionnel)">
+            
+            <label>Mon Deck pour ce tournoi</label>
+            <div class="flex-row">
+                <select id="sel-my-deck"></select>
+                <button class="btn-plus" onclick="quickAddDeck('myDecks', 'sel-my-deck')">+</button>
             </div>
-            <h3 id="deck-type-title">Mes Decks Perso</h3>
-            <input type="text" id="new-deck-name" placeholder="Nom du deck">
-            <button onclick="ajouterDeck()">Ajouter ce deck</button>
-            <div id="decks-list-render" style="margin-top:20px;"></div>
+            
+            <button onclick="createEvent()" style="margin-top:20px">Créer le Tournoi</button>
         </div>
     </div>
 
-    <!-- STATS -->
-    <div id="section-stats" class="hidden">
-        <button class="btn-secondary" onclick="showSection('section-liste')">⬅ Retour</button>
+    <!-- SECTION : DÉTAIL TOURNOI (MATCHS) -->
+    <div id="sec-matches" class="hidden">
+        <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
         <div class="card">
-            <h2>Récap par Deck utilisé</h2>
-            <div id="stats-content"></div>
+            <h2 id="view-ev-name">---</h2>
+            <div id="view-ev-info" style="font-size:0.9rem; color:var(--secondary); margin-bottom:15px;"></div>
+            
+            <div id="matches-list"></div>
+            
+            <hr style="margin:20px 0">
+            <h3>Ajouter une rencontre</h3>
+            
+            <label>Adversaire</label>
+            <input type="text" id="m-opp-name" placeholder="Nom">
+            
+            <label>Deck de l'adversaire</label>
+            <div class="flex-row">
+                <select id="sel-opp-deck"></select>
+                <button class="btn-plus" onclick="quickAddDeck('oppDecks', 'sel-opp-deck')">+</button>
+            </div>
+            
+            <label>Résultat</label>
+            <select id="m-res">
+                <option value="WIN">VICTOIRE (WIN)</option>
+                <option value="LOSE">DÉFAITE (LOSE)</option>
+            </select>
+            
+            <label>Commentaire</label>
+            <textarea id="m-comm" placeholder="Raccourcis, erreurs, etc..."></textarea>
+            
+            <button onclick="addMatch()">Enregistrer le Match</button>
+        </div>
+    </div>
+
+    <!-- SECTION : GESTION DES DECKS -->
+    <div id="sec-decks" class="hidden">
+        <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
+        <div class="card">
+            <h2>Mes Decks Perso</h2>
+            <div class="flex-row">
+                <input type="text" id="in-my-deck" placeholder="Nom du deck">
+                <button class="btn-plus" onclick="addDeckManual('myDecks', 'in-my-deck')">+</button>
+            </div>
+            <div id="list-my-decks" style="margin-top:10px"></div>
+        </div>
+        <div class="card">
+            <h2>Decks Adversaires</h2>
+            <div class="flex-row">
+                <input type="text" id="in-opp-deck" placeholder="Nom du deck">
+                <button class="btn-plus" onclick="addDeckManual('oppDecks', 'in-opp-deck')">+</button>
+            </div>
+            <div id="list-opp-decks" style="margin-top:10px"></div>
+        </div>
+    </div>
+
+    <!-- SECTION : STATS -->
+    <div id="sec-stats" class="hidden">
+        <button class="btn-sec" onclick="nav('sec-home')">⬅ Retour</button>
+        <div class="card">
+            <h2>Stats par Deck Personnel</h2>
+            <div id="stats-render"></div>
         </div>
     </div>
 
 <script>
-    let state = { 
-        events: [], 
-        mesDecks: ["Mon Deck A"], 
-        oppDecks: ["Deck adverse X"],
-        currentEventId: null,
-        currentDeckView: 'mesDecks' 
+    // --- DATA ---
+    let db = {
+        events: [],
+        myDecks: ["Mon Deck de base"],
+        oppDecks: ["Deck adverse inconnu"],
+        curEv: null
     };
 
-    function init() {
-        const saved = localStorage.getItem('tournoi_db_v2');
-        if (saved) state = JSON.parse(saved);
-        renderEvents();
-        updateAllSelects();
+    function load() {
+        const saved = localStorage.getItem('tournoi_v3_db');
+        if(saved) db = JSON.parse(saved);
+        renderHome();
+        updateSelects();
     }
 
     function save() {
-        localStorage.setItem('tournoi_db_v2', JSON.stringify(state));
+        localStorage.setItem('tournoi_v3_db', JSON.stringify(db));
     }
 
-    function showSection(id) {
-        document.querySelectorAll('body > div').forEach(div => div.classList.add('hidden'));
+    // --- NAVIGATION ---
+    function nav(id) {
+        document.querySelectorAll('body > div').forEach(d => d.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
-        if(id === 'section-stats') renderStats();
-        if(id === 'section-decks') renderDecks(state.currentDeckView);
-        if(id === 'section-nouveau') updateAllSelects();
+        if(id === 'sec-decks') renderDecksManager();
+        if(id === 'sec-stats') renderStats();
         window.scrollTo(0,0);
     }
 
-    // GESTION DECKS
-    function renderDecks(type) {
-        state.currentDeckView = type;
-        document.getElementById('deck-type-title').innerText = type === 'mesDecks' ? "Mes Decks Perso" : "Decks Adversaires";
-        const list = document.getElementById('decks-list-render');
-        list.innerHTML = "";
-        state[type].sort().forEach((deck, index) => {
-            list.innerHTML += `<div class="deck-row">
-                <span>${deck}</span>
-                <button class="btn-danger btn-small" onclick="supprimerDeck('${type}', ${index})">X</button>
-            </div>`;
-        });
-        updateAllSelects();
+    // --- DECKS ---
+    function updateSelects() {
+        const sMy = document.getElementById('sel-my-deck');
+        const sOpp = document.getElementById('sel-opp-deck');
+        
+        sMy.innerHTML = db.myDecks.sort().map(d => `<option value="${d}">${d}</option>`).join('');
+        sOpp.innerHTML = db.oppDecks.sort().map(d => `<option value="${d}">${d}</option>`).join('');
     }
 
-    function ajouterDeck() {
-        const name = document.getElementById('new-deck-name').value;
-        const type = state.currentDeckView;
-        if (name) {
-            state[type].push(name);
-            document.getElementById('new-deck-name').value = "";
-            save(); renderDecks(type);
+    function quickAddDeck(type, selectId) {
+        const name = prompt("Nom du nouveau deck :");
+        if(name) {
+            db[type].push(name);
+            save();
+            updateSelects();
+            document.getElementById(selectId).value = name;
+            if(document.getElementById('sec-decks').className === "") renderDecksManager();
         }
     }
 
-    function supprimerDeck(type, index) {
-        if(confirm("Supprimer ce deck ?")) {
-            state[type].splice(index, 1);
-            save(); renderDecks(type);
+    function addDeckManual(type, inputId) {
+        const val = document.getElementById(inputId).value;
+        if(val) {
+            db[type].push(val);
+            document.getElementById(inputId).value = "";
+            save(); updateSelects(); renderDecksManager();
         }
     }
 
-    function updateAllSelects() {
-        const mySelect = document.getElementById('mon-deck-event');
-        const oppSelect = document.getElementById('opp-deck-select');
-        
-        mySelect.innerHTML = state.mesDecks.map(d => `<option value="${d}">${d}</option>`).join('');
-        oppSelect.innerHTML = '<option value="">-- Deck adverse --</option>' + 
-                              state.oppDecks.map(d => `<option value="${d}">${d}</option>`).join('');
+    function deleteDeck(type, name) {
+        if(confirm("Supprimer ce deck de la liste ?")) {
+            db[type] = db[type].filter(d => d !== name);
+            save(); updateSelects(); renderDecksManager();
+        }
     }
 
-    // EVENTS
-    function creerEvenement() {
-        const nom = document.getElementById('event-nom').value || "Tournoi";
-        const myDeck = document.getElementById('mon-deck-event').value;
-        if(!myDeck) return alert("Créez d'abord un deck perso dans 'Gérer les decks'");
-        
-        const newEvent = { 
-            id: Date.now(), 
-            nom, 
-            date: document.getElementById('event-date').value || new Date().toISOString().split('T')[0], 
-            lieu: document.getElementById('event-lieu').value,
-            myDeck: myDeck,
-            matchs: [] 
+    function renderDecksManager() {
+        const render = (type, divId) => {
+            document.getElementById(divId).innerHTML = db[type].sort().map(d => `
+                <div class="stats-row">
+                    <span>${d}</span>
+                    <button class="btn-dan" onclick="deleteDeck('${type}', '${d}')">Suppr</button>
+                </div>
+            `).join('');
         };
-        state.events.unshift(newEvent);
-        save(); renderEvents(); ouvrirEvent(newEvent.id);
+        render('myDecks', 'list-my-decks');
+        render('oppDecks', 'list-opp-decks');
     }
 
-    function renderEvents() {
-        const container = document.getElementById('liste-events');
-        container.innerHTML = "";
-        state.events.forEach(ev => {
-            container.innerHTML += `<div class="card">
-                <strong>${ev.date} - ${ev.nom}</strong><br>
-                <small>Joué avec : ${ev.myDeck}</small><br>
-                <button onclick="ouvrirEvent(${ev.id})">Ouvrir (${ev.matchs.length} matchs)</button>
-                <button class="btn-danger btn-small" onclick="supprimerEvent(${ev.id})">Supprimer</button>
-            </div>`;
-        });
+    // --- TOURNOIS ---
+    function createEvent() {
+        const name = document.getElementById('ev-name').value || "Tournoi";
+        const newEv = {
+            id: Date.now(),
+            name: name,
+            date: document.getElementById('ev-date').value,
+            place: document.getElementById('ev-place').value,
+            myDeck: document.getElementById('sel-my-deck').value,
+            matches: []
+        };
+        db.events.unshift(newEv);
+        save();
+        openEvent(newEv.id);
     }
 
-    function ouvrirEvent(id) {
-        state.currentEventId = id;
-        const ev = state.events.find(e => e.id === id);
-        document.getElementById('current-event-title').innerText = ev.nom;
-        document.getElementById('current-event-mydeck').innerText = "Mon deck : " + ev.myDeck;
-        renderMatchs();
-        showSection('section-matchs');
+    function openEvent(id) {
+        db.curEv = id;
+        const ev = db.events.find(e => e.id === id);
+        document.getElementById('view-ev-name').innerText = ev.name;
+        document.getElementById('view-ev-info').innerText = `${ev.date} - ${ev.place || ''} | Joué avec : ${ev.myDeck}`;
+        renderMatches();
+        nav('sec-matches');
     }
 
-    function supprimerEvent(id) {
+    function renderHome() {
+        document.getElementById('list-events').innerHTML = db.events.map(ev => `
+            <div class="card">
+                <strong>${ev.name}</strong> (${ev.date})<br>
+                <small>Deck : ${ev.myDeck} | ${ev.matches.length} matchs</small>
+                <div style="margin-top:10px; display:flex; gap:5px;">
+                    <button onclick="openEvent(${ev.id})">Ouvrir</button>
+                    <button class="btn-dan" onclick="deleteEvent(${ev.id})">Suppr</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function deleteEvent(id) {
         if(confirm("Supprimer ce tournoi ?")) {
-            state.events = state.events.filter(e => e.id !== id);
-            save(); renderEvents();
+            db.events = db.events.filter(e => e.id !== id);
+            save(); renderHome();
         }
     }
 
-    // MATCHS
-    function ajouterMatch() {
-        const oppDeck = document.getElementById('opp-deck-select').value;
-        if(!oppDeck) return alert("Sélectionnez le deck adverse");
-        
-        const ev = state.events.find(e => e.id === state.currentEventId);
-        ev.matchs.push({
+    // --- MATCHS ---
+    function addMatch() {
+        const ev = db.events.find(e => e.id === db.curEv);
+        ev.matches.push({
             id: Date.now(),
-            opp: document.getElementById('opp-nom').value || "Inconnu",
-            deck: oppDeck,
-            res: document.getElementById('mon-resultat').value,
-            comm: document.getElementById('match-comment').value
+            opp: document.getElementById('m-opp-name').value || "Inconnu",
+            deck: document.getElementById('sel-opp-deck').value,
+            res: document.getElementById('m-res').value,
+            comm: document.getElementById('m-comm').value
         });
-        save(); renderMatchs();
-        document.getElementById('opp-nom').value = "";
-        document.getElementById('match-comment').value = "";
+        save();
+        renderMatches();
+        document.getElementById('m-opp-name').value = "";
+        document.getElementById('m-comm').value = "";
     }
 
-    function renderMatchs() {
-        const ev = state.events.find(e => e.id === state.currentEventId);
-        const container = document.getElementById('matchs-container');
-        container.innerHTML = "";
-        ev.matchs.forEach(m => {
-            container.innerHTML += `<div class="match-item ${m.res}">
-                <strong>${m.res.toUpperCase()}</strong> vs ${m.opp} (${m.deck})
-                <br><small>${m.comm}</small>
-                <button class="btn-danger btn-small" style="position:absolute; right:5px; top:5px;" onclick="supprimerMatch(${m.id})">X</button>
-            </div>`;
-        });
+    function renderMatches() {
+        const ev = db.events.find(e => e.id === db.curEv);
+        document.getElementById('matches-list').innerHTML = ev.matches.map(m => `
+            <div class="match-item ${m.res}">
+                <strong>${m.res}</strong> vs ${m.opp} <br>
+                <span class="deck-tag">Deck Adv: ${m.deck}</span><br>
+                <small>${m.comm}</small>
+                <button class="btn-dan" style="position:absolute; top:5px; right:5px;" onclick="delMatch(${m.id})">X</button>
+            </div>
+        `).join('');
     }
 
-    function supprimerMatch(matchId) {
-        const ev = state.events.find(e => e.id === state.currentEventId);
-        ev.matchs = ev.matchs.filter(m => m.id !== matchId);
-        save(); renderMatchs();
+    function delMatch(id) {
+        const ev = db.events.find(e => e.id === db.curEv);
+        ev.matches = ev.matches.filter(m => m.id !== id);
+        save(); renderMatches();
     }
 
-    // STATS
+    // --- STATS ---
     function renderStats() {
-        const myDeckStats = {};
-        state.events.forEach(ev => {
-            if(!myDeckStats[ev.myDeck]) myDeckStats[ev.myDeck] = { win: 0, lose: 0 };
-            ev.matchs.forEach(m => {
-                myDeckStats[ev.myDeck][m.res]++;
+        let stats = {}; // par Deck Perso
+        db.events.forEach(ev => {
+            if(!stats[ev.myDeck]) stats[ev.myDeck] = { w: 0, l: 0 };
+            ev.matches.forEach(m => {
+                if(m.res === 'WIN') stats[ev.myDeck].w++;
+                else stats[ev.myDeck].l++;
             });
         });
+
         let html = "";
-        for(let d in myDeckStats) {
-            const total = myDeckStats[d].win + myDeckStats[d].lose;
-            const wr = total > 0 ? Math.round((myDeckStats[d].win / total) * 100) : 0;
-            html += `<div class="deck-row"><strong>${d}</strong> <span>${myDeckStats[d].win}W - ${myDeckStats[d].lose}L (${wr}%)</span></div>`;
+        for(let d in stats) {
+            let total = stats[d].w + stats[d].l;
+            let wr = total > 0 ? Math.round((stats[d].w / total) * 100) : 0;
+            html += `
+                <div class="stats-row">
+                    <strong>${d}</strong>
+                    <span>${stats[d].w}W - ${stats[d].l}L (${wr}%)</span>
+                </div>`;
         }
-        document.getElementById('stats-content').innerHTML = html || "Aucune donnée";
+        document.getElementById('stats-render').innerHTML = html || "Aucune donnée";
     }
 
-    // IMPORT/EXPORT
-    function exportData() {
-        const blob = new Blob([JSON.stringify(state)], {type: "application/json"});
+    // --- IMPORT / EXPORT ---
+    function exportJSON() {
+        const data = JSON.stringify(db);
+        const blob = new Blob([data], {type: "application/json"});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = "sauvegarde_tournois.json";
+        a.download = "tournois_backup.json";
         a.click();
     }
 
-    function importData(event) {
-        const file = event.target.files[0];
+    function importJSON(e) {
         const reader = new FileReader();
-        reader.onload = (e) => {
-            state = JSON.parse(e.target.result);
-            save(); init(); alert("Données chargées !");
+        reader.onload = (event) => {
+            db = JSON.parse(event.target.result);
+            save(); load(); nav('sec-home');
         };
-        reader.readAsText(file);
+        reader.readAsText(e.target.files[0]);
     }
 
-    init();
+    load();
 </script>
 </body>
 </html>
